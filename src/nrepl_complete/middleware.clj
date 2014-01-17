@@ -6,19 +6,35 @@
             [complete.core :as jvm-complete]
             [cljs-complete.core :as cljs-complete]))
 
+
+(defn grab-cljs-env
+  [msg]
+  (when-let [piggieback-key (resolve 'cemerick.piggieback/*cljs-repl-env*)]
+    (let [session (:session msg)
+          env (get @session piggieback-key)]
+      (println session)
+      (println (keys env))
+      (if env  (:cljs.env/compiler env)))))
+
 (defn as-sym
   [x]
   (if x (symbol x)))
 
 (defn complete
-  [ns prefix public-only?]
-  (jvm-complete/completions (str prefix) ns)
-  )
+  [{:keys [symbol ns public-only? case-sensitive? prefer-ns] :as msg}]
+  (let [ns (as-sym ns)
+        prefix (str symbol)]
+    (println ns)
+    (println prefix)
+    (if-let [cljs-env (grab-cljs-env msg)]
+      (do (println msg)
+        (cljs-complete/completions cljs-env prefix ns))
+      (jvm-complete/completions prefix ns))))
 
 (defn complete-reply
   ;; these are lifted from ritz
-  [{:keys [symbol ns public-only? case-sensitive? prefer-ns transport] :as msg}]
-  (let [results (complete (as-sym ns) (str symbol) public-only?)]
+  [{:keys [transport] :as msg}]
+  (let [results (complete msg)]
     (transport/send
      transport (response-for msg :value results))
     (transport/send transport (response-for msg :status :done))
@@ -37,9 +53,20 @@
   [handler]
   (wrap-complete' handler))
 
+(defn try-piggieback
+  []
+  (try
+    (require 'cemerick.piggieback)
+    (resolve 'cemerick.piggieback/wrap-cljs-repl)
+    (catch Exception _)))
+
 (set-descriptor!
  #'wrap-complete
- {:handles
+ {:requires (if-let [piggieback (try-piggieback)]
+              #{"session" piggieback}
+              #{"session"})
+  :expects #{"load-file" "eval"}
+  :handles
   {"complete"
    {:doc "Return a list of symbols matching the specified (partial) symbol."
     :requires {"symbol" "The symbol to lookup"

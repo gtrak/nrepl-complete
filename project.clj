@@ -8,7 +8,8 @@
                  [cljs-complete "0.1.0"]
                  [org.clojure/tools.nrepl "0.2.3"]]
   :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.1.2"]]
-                   :repl-options {:nrepl-middleware [nrepl-complete.middleware/wrap-complete]}}}
+                   :repl-options {:nrepl-middleware [nrepl-complete.middleware/wrap-complete]}
+                   :plugins [[com.cemerick/austin "0.1.3"]]}}
 
   )
 
