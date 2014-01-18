@@ -6,15 +6,12 @@
             [complete.core :as jvm-complete]
             [cljs-complete.core :as cljs-complete]))
 
-
 (defn grab-cljs-env
   [msg]
   (when-let [piggieback-key (resolve 'cemerick.piggieback/*cljs-repl-env*)]
     (let [session (:session msg)
           env (get @session piggieback-key)]
-      (println session)
-      (println (keys env))
-      (if env  (:cljs.env/compiler env)))))
+      (if env @(:cljs.env/compiler env)))))
 
 (defn as-sym
   [x]
@@ -24,11 +21,8 @@
   [{:keys [symbol ns public-only? case-sensitive? prefer-ns] :as msg}]
   (let [ns (as-sym ns)
         prefix (str symbol)]
-    (println ns)
-    (println prefix)
     (if-let [cljs-env (grab-cljs-env msg)]
-      (do (println msg)
-        (cljs-complete/completions cljs-env prefix ns))
+      (cljs-complete/completions cljs-env prefix ns)
       (jvm-complete/completions prefix ns))))
 
 (defn complete-reply
