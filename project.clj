@@ -1,4 +1,4 @@
-(defproject nrepl-complete "0.1.0-SNAPSHOT"
+(defproject nrepl-complete "0.1.0"
   :description "a middleware abstracting autocompletion for clj and cljs"
   :url "https://github.com/gtrak/nrepl-complete"
   :license {:name "Eclipse Public License"
